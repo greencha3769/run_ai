@@ -1,4 +1,6 @@
+import os
 import cv2
+import queue
 import torch
 import numpy as np
 # sklearn 0.22 호환용---
@@ -13,17 +15,14 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-from rclpy.qos import qos_profile_sensor_data, QoSProfile, ReliabilityPolicy, HistoryPolicy
-
+from rclpy.qos import (QoSProfile, ReliabilityPolicy, HistoryPolicy)
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 class DataCollector(Node):
     def __init__(self):
         super().__init__("DataCollector")
-        self.delay = 0 #저장
-        # 변수
-        self.frame_count = 0
-        self.save_count = 256
-        # 파일
+        self.YOLO_PATH = r""
         self.SAVE_FILE = r"/home/rtree/testai_ws/src/test_ai/image"
         os.makedirs(self.SAVE_FILE, exist_ok=True)
         qos = QoSProfile(
@@ -31,7 +30,22 @@ class DataCollector(Node):
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST
         )
-        self.videoSubscriber = self.create_subscription(Image, "/camera/color/image_raw", self.videoSubscriber_callback, qos)
+        # callback group 생성
+        self.camera_group = MutuallyExclusiveCallbackGroup()
+        self.save_group = MutuallyExclusiveCallbackGroup()
+
+        self.videoSubscriber = self.create_subscription(
+            Image,
+            "/camera/color/image_raw",
+            self.videoSubscriber_callback,
+            qos,
+            callback_group=self.camera_group
+        )
+        self.timer = self.create_timer(
+            0.1,
+            self.save_timer_callback,
+            callback_group=self.save_group
+        )
         self.bridge = CvBridge()
         self.src_pub = self.create_publisher(
             Image,
@@ -43,13 +57,19 @@ class DataCollector(Node):
             "/yolo/crop_image",
             10
         )
+        self.save_queue = queue.Queue(maxsize=1)
+        self.frame_count = 0
+        self.frame_interval = 15
+        self.save_count = 0
         self.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+        # AI Model 초기화
+        self.Y_model = YOLO(self.YOLO_PATH)
+        self.Y_model.to(self.DEVICE)
         # 기호함수
         self.MARGIN = 2
         self.CONF_TH = 0.6
         #변수
         self.prev_map = None
-        self.bridge = CvBridge()
         # AI Model 초기화
         self.frame_boxes = deque(maxlen=5)
         # ROI 변경 확인 횟수
@@ -59,26 +79,23 @@ class DataCollector(Node):
         self.SIZE_TH = 10
         # 연속 몇 번 확인 후 변경
         self.CHANGE_LIMIT = 4
-        # 최근 YOLO 결과
-        # 이전 평균 ROI
         # 실제 사용하는 ROI
         self.current_roi = None
-        # 연속 이동 횟수
-        # 설정값
-        # AI Model 초기화
-        self.Y_model = YOLO(self.YOLO_PATH)
-        self.Y_model.to(self.DEVICE)
+
 
     def videoSubscriber_callback(self, msg):
         try:
             src = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-            src = cv2.convertScaleAbs(src, alpha=1.1, beta=10)
+            src = cv2.convertScaleAbs(src, alpha=1.2, beta=-70)
             self.run(src)
+            """
             src_msg = self.bridge.cv2_to_imgmsg(
                 src,
                 "bgr8"
             )
             self.src_pub.publish(src_msg)
+            #print("pub")
+            """
         except Exception as e:
             print(e)
             #self.get_logger().error(f'Error')
@@ -87,24 +104,6 @@ class DataCollector(Node):
             cv2.destroyAllWindows()
             self.destroy_node()
             rclpy.shutdown()
-
-    def videoSubscriber_callback(self, msg):
-        #self.get_logger().info("callback")
-        try:
-            #print("1")
-            src = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-            src = cv2.convertScaleAbs(src, alpha=1.1, beta=10)
-            self.run(src)
-            src_msg = self.bridge.cv2_to_imgmsg(
-                src,
-                "bgr8"
-            )
-            self.src_pub.publish(src_msg)
-            #self.data_collector(src)
-            #print("yes")
-        except Exception as e:
-            self.get_logger().info(f'{e}')
-            return
         
     def detect_objects(self, src):
         import time
@@ -242,20 +241,35 @@ class DataCollector(Node):
     
         return crop_img
 
-    def data_collector(self, src):
-        #self.get_logger().info(f'{self.delay}')
-        if self.delay >= 25:
+    def save_timer_callback(self):
+        try:
+            # 저장할 이미지 가져오기
+            src = self.save_queue.get_nowait()
+        except queue.Empty:
+            return
+
+        try:
             save_path = os.path.join(
                 self.SAVE_FILE,
-                f"good_{self.save_count:06d}.png"
+                f"good_{self.save_count:04d}.png"
             )
-            if cv2.imwrite(save_path, src):
-                print(f"완료: {self.save_count}장 저장")
+            success = cv2.imwrite(
+                save_path,
+                src
+            )
+
+            if success:
+                self.get_logger().info(
+                    f"완료: {self.save_count}장 저장"
+                )
                 self.save_count += 1
             else:
-                print("저장 실패, 위기")
-            self.delay = 0
-        self.delay += 1
+                self.get_logger().error(
+                    f"저장 실패: {save_path}"
+                )
+
+        except Exception as e:
+            self.get_logger().error(f"Save error: {e}")
     
     def run(self, src):
         print("why")
@@ -264,30 +278,43 @@ class DataCollector(Node):
         if boxes is None:
             return
         print("1")
-        crop_img, crop_tensor = self.crop_video(src, boxes)
+        crop_img = self.crop_video(src, boxes)
         if crop_img is None:
             return
         print("2")
         if crop_img is not None:
+            self.frame_count += 1
+            if self.frame_count >= self.frame_interval:
+                self.frame_count = 0
+                try:
+                    # Queue에 넣고 callback 종료
+                    self.save_queue.put_nowait(crop_img)
+                # 예외 설명 queue가 가득 차있다는 것은 저장이 오래걸려 큐에서 아직 값이 안 빠져나가가 것으로 간주한다
+                except queue.Full:
+                    # 병목을 줄이고 최신 프레임을 유지하기 위해 프레임 버리고 다시 받음
+                    self.save_queue.get_nowait()
+                    self.save_queue.put_nowait(crop_img)
+                    #self.get_logger().warn("Save queue full - frame skipped")
             crop_msg = self.bridge.cv2_to_imgmsg(
                 crop_img,
                 "bgr8"
             )
-
             self.crop_pub.publish(crop_msg)
-            self.data_collector(src)
 
 def main(args=None):
     rclpy.init(args=args)
     node = DataCollector()
 
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+
     try:
-        rclpy.spin(node)
+        executor.spin()
     except KeyboardInterrupt:
-        node.get_logger().info('Keyboard Interrupt (SIGINT)')
+        node.get_logger().info("Keyboard Interrupt (SIGINT)")
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        executor.shutdown()
 
 if __name__ == "__main__":
     main()
