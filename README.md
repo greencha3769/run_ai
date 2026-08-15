@@ -2,7 +2,7 @@
 (Windows 환경에서 제품 이상 탐지 모델을 학습하고 테스트하기 위한 프로젝트)
 [전반적인 코드 백업용 branch]
 
-## 프로젝트 구조
+## 파일 구조
 ```text
 Product_Anomaly_Detection/
 ├── training/
