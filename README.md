@@ -28,10 +28,8 @@ Product_Anomaly_Detection/
 ## 구성
 
 ### PatchCore
-
 `training/Patch_core/`
-
-PatchCore 기반 제품 이상 탐지 모델을 학습하기 위한 코드입니다.
+(PatchCore 모델 관련 코드)
 
 * `data_selector.py` : 학습 데이터 선택
 * `patch_core_trainig.py` : PatchCore 모델 학습
