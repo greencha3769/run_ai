@@ -3,7 +3,6 @@ Product Anomaly Detection ROS 2 Package
 ## 프로젝트 개요
 Ubuntu 환경에서 ROS 2를 기반으로 제품의 객체를 탐지하고 이상 여부를 판별하기 위한 프로젝트
 ROS 2 환경에서 Astra 카메라 영상을 입력받아 YOLO를 이용하여 제품의 위치를 탐지하고, PatchCore를 이용하여 실시간으로 제품의 이상 탐지를 수행하는 것을 목표로 한다.
-## 파일 구조
 
 ## 개발 환경
 
@@ -37,3 +36,5 @@ ROS 2 환경에서 Astra 카메라 영상을 입력받아 YOLO를 이용하여 �
 ### YOLO 실행
 ### PatchCore 실행
 ### 통합 이상 탐지 실행
+
+## 파일 구조
