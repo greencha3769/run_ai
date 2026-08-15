@@ -12,8 +12,14 @@ ROS 2 환경에서 Astra 카메라 영상을 입력받아 YOLO를 이용하여 �
 ### JetPack
 ### ROS 2
 * ROS 2 Galactic
+### Python
+* 3.8.10
 ### 라이브러리
-Python * 3.8.10
+| 항목 | 버전 |
+|||
+|||
+|||
+|||
 ### PyTorch
 * 
 ### torchvision
