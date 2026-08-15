@@ -37,7 +37,7 @@
 * OpenCV version:
 * numpy  version:
 * Toch version:
-* 
+
 ## 파일 구조
 ```text
 Product_Anomaly_Detection/
