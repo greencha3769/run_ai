@@ -16,20 +16,13 @@ ROS 2 환경에서 Astra 카메라 영상을 입력받아 YOLO를 이용하여 �
 * 3.8.10
 ### 라이브러리
 | 항목 | 버전 |
-|||
-|||
-|||
-|||
-### PyTorch
-* 
-### torchvision
-* 
-### NumPy
-* 
-### OpenCV
-* 
-### anomalib
-* 
+|---|---|---|
+| PyTorch ||
+| torchvision ||
+| NumPy ||
+| OpenCV ||
+| anomalib ||
+| Ultralytics ||
 ## 환경 설정
 ### 4.1 ROS 2 설치
 * Debian packages for ROS 2 Galactic 이용 [ROS 2 Documentation: Galactic](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)
