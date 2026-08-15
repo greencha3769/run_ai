@@ -21,17 +21,36 @@ ROS 2 환경에서 Astra 카메라 영상을 입력받아 YOLO를 이용하여 �
 | torchvision ||
 | NumPy ||
 | OpenCV ||
-| anomalib ||
+| Anomalib ||
 | Ultralytics ||
 ## 환경 설정
 ### 4.1 ROS 2 설치
 * Debian packages for ROS 2 Galactic 이용 [ROS 2 Documentation: Galactic](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)
 ### 4.2 Python Workspace 생성
+```text
+
+```
 ### 4.3 PyTorch 설치
+```text
+
+```
 ### 4.4 Torchvision 설치
+```text
+
+```
 ### 4.5 OpenCV 설정
-### 4.6 Anomalib / PatchCore 설정
-### 4.7 YOLO 설정
+```text
+
+```
+### 4.6 Ultralytics / YOLO 설정
+```text
+
+```
+### 4.7 Anomalib / PatchCore 설정
+```text
+
+```
+
 ### 4.8 ros2_astra_camera
 ## 모델 파일
 ### YOLO
