@@ -96,7 +96,7 @@ cd ~/ros2_ws
 colcon build --symlink-install
 source ~/ros2_ws/install/setup.bash
 ```
-### rviz2
+### rviz2 실행
 ```text
 source /opt/ros/galactic/setup.bash 
 source ~/ros2_ws/install/setup.bash
@@ -114,3 +114,20 @@ source ~/ros2_ws/install/setup.bash
 ros2 run run_ai padcu
 ```
 ## Package 구조
+```text
+run_ai/
+├── .gitignore
+├── image/
+├── model/
+├── package.xml
+├── resource/
+├── run_ai/
+│   ├── __init__.py
+│   ├── only_yolo_ubuntu.py
+│   ├── patch_data_collector.py
+│   ├── Product_anomaly_detection_code_ubuntu.py
+│   └── yolo_data_collector.py
+├── setup.cfg
+├── setup.py
+└── test/
+```
