@@ -79,21 +79,38 @@ python3 -m pip install scikit-learn==1.3.2
 ### 4.8 OpenCV 설정
 ```text
 python3 -c "import cv2; print(cv2.__version__)"
-python3 -m pip show opencv-python
-python3 -m pip show opencv-python-headless
-python3 -m pip uninstall -y opencv-python opencv-python-headless
+python3 -m pip show opencv-python # 혹시 다른 버전의 open cv가 설치 되어있는 확인(무작정 실행 X)
+python3 -m pip show opencv-python-headless # 혹시 다른 버전의 open cv가 설치 되어있는 확인(무작정 실행 X)
+python3 -m pip uninstall -y opencv-python opencv-python-headless # 다른 버전의 open cv가 설치 되어있는 경우(무작정 실행 X)
 python3 -m pip install --user opencv-python==4.8.0.76
 ```
 ### 4.9 ros2_astra_camera
 * ros2_astra_camera package 이용 [orbbec/ros2_astra_camera
 ](https://github.com/orbbec/ros2_astra_camera)
 ## 모델 파일
-### YOLO
-### PatchCore
+Package 안에 model 파일 생성한 후 제작한 모델을 불러오고 관련 경로를 수정해준다
 ## 실행
-### ROS 2 workspace 설정
 ### run_ai 빌드
-### YOLO 실행
-### PatchCore 실행
+```text
+cd ~/ros2_ws
+colcon build --symlink-install
+source ~/ros2_ws/install/setup.bash
+```
+### rviz2
+```text
+source /opt/ros/galactic/setup.bash 
+source ~/ros2_ws/install/setup.bash
+rviz2
+```
+### astra camera 실행
+```text
+source /opt/ros/galactic/setup.bash 
+source ~/ros2_ws/install/setup.bash
+ros2 launch astra_camera astra.launch.xml
+```
 ### 통합 이상 탐지 실행
-## 파일 구조
+```text
+source ~/ros2_ws/install/setup.bash
+ros2 run run_ai padcu
+```
+## Package 구조
